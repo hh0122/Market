@@ -1,20 +1,20 @@
 const express = require("express");
 const router = express.Router();
-
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// create token;
-
-const createToken = () => {
-  return jwt.sign({id}, JWT_SECRET, { expiresIn :"1d"});
-}
-
 const prisma = require("../prisma");
+
+// create token;
+const createToken = (id) => {
+  return jwt.sign({ id }, JWT_SECRET, { expiresIn: "1d" });
+};
+
 // grab token from headers only if it exists
-router.use( async (req, res, next )=> {
+router.use(async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  const token = authHeader?.slice(7); 
+  const token = authHeader?.slice(7);
   if (!token) return next();
   try {
     const { id } = jwt.verify(token, JWT_SECRET);
@@ -23,46 +23,45 @@ router.use( async (req, res, next )=> {
     });
     req.user = user;
     next();
-  }catch (e){
+  } catch (e) {
     next(e);
   }
 });
 
 // POST/register
 router.post("/register", async (req, res, next) => {
-  const {email, password} = req.body;
+  const { username, password } = req.body;
   try {
-    const user = await prisma.user.register(email,password);
-    const token = createToken( user.id);
+    const user = await prisma.user.register(username, password);
+    const token = createToken(user.id);
     res.status(201).json({ token });
-  }catch (e){
+  } catch (e) {
     next(e);
   }
 });
 
 // POST/login
-
 router.post("/login", async (req, res, next) => {
-  const { username, password } =req.body;
+  const { username, password } = req.body;
   try {
-    const user = await prisma.user.login(email, password);
+    const user = await prisma.user.login(username, password);
     const token = createToken(user.id);
     res.json({ token });
   } catch (e) {
-    next (e);
+    next(e);
   }
 });
 
 // checks the request for an authenticated user
-function authentication( req, res, next ){
-  if (req.user){
+function authenticate(req, res, next) {
+  if (req.user) {
     next();
   } else {
-    next( { status :401, message: " You must be logged in."})
+    next({ status: 401, message: "You must be logged in." });
   }
 }
 
 module.exports = {
   router,
-  authentication,
-}
+  authenticate,
+};
