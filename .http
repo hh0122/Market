@@ -1,0 +1,44 @@
+@host = http://localhost:3000
+
+### Register new user
+POST {{host}}/register
+Content-Type: application/json
+
+{
+  "username" : "unknown",
+  "password": "123"
+}
+
+### login
+# @name login
+POST {{host}}/login
+Content-Type: application/json
+
+{
+  "username": "unknown",
+  "password": "123"
+}
+
+### Get orders as logged in user
+@token = {{login.response.body.token}}
+Get {{host}}/orders
+Authorization: Bearer {{token}}
+
+### create orders as logged in user
+POST {{host}}/orders
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "orderId" : 4
+}
+
+### get all products
+GET  {{host}}/products
+
+### get specific product
+GET {{host}}/products/2
+
+### get specific product as a user
+GET {{host}}/products/3
+Authorization: Bearer {{token}}
